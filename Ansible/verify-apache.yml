@@ -1,0 +1,27 @@
+---
+- hosts: all                                # Declare what hosts this playbook will run on
+  vars:                                            # Set up variables for this playbook
+    http_port: 80
+    max_clients: 200
+  become: yes
+  # remote_user: root                                # Set the user you'll log in as on the managed nodes
+  tasks:                                           # Tasks are the operations that will be performed on the managed nodes
+    - name: ensure apache is at the latest version # Each task has a name that helps us identify it
+      yum:                                         # We invoke a module as part of the task and provide the module's arguments below
+        name: httpd
+        state: latest
+    - name: write the apache config file
+      template:
+        src: /srv/httpd.j2
+        dest: /etc/httpd.conf
+      notify:                                      # We use notify in order to invoke a handler
+      - restart apache
+    - name: ensure apache is running
+      service:
+        name: httpd
+        state: started
+  handlers:                                        # Handlers are used in order to manage services or daemons on the managed nodes
+    - name: restart apache
+      service:
+        name: httpd
+        state: restarted
